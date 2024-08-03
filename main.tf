@@ -33,6 +33,67 @@ resource "ibm_is_subnet" "subnet-mac-1" {
   resource_group  = data.ibm_resource_group.group-mac.id
 }
 
+resource "ibm_is_subnet" "subnet-mac-2" {
+  name            = "subnet-mac-2"
+  vpc             = ibm_is_vpc.vpc-mac.id
+  zone            = "jp-tok-1"
+  ipv4_cidr_block = "10.244.1.0/24"
+  network_acl     = ibm_is_vpc.vpc-mac.default_network_acl
+  resource_group  = data.ibm_resource_group.group-mac.id
+}
+
+# resource "ibm_is_network_acl" "nacl-subnet-mac-1" {
+#   name = "nacl-subnet-mac-1"
+#   rules {
+#     name        = "outbound"
+#     action      = "allow"
+#     source      = "0.0.0.0/0"
+#     destination = "0.0.0.0/0"
+#     direction   = "outbound"
+#     icmp {
+#       code = 1
+#       type = 1
+#     }
+#   }
+#   rules {
+#     name        = "inbound"
+#     action      = "allow"
+#     source      = "0.0.0.0/0"
+#     destination = "0.0.0.0/0"
+#     direction   = "inbound"
+#     icmp {
+#       code = 1
+#       type = 1
+#     }
+#   }
+# }
+
+# resource "ibm_is_network_acl" "nacl-subnet-mac-1" {
+#   name = "nacl-subnet-mac-1"
+#   rules {
+#     name        = "outbound"
+#     action      = "allow"
+#     source      = "0.0.0.0/0"
+#     destination = "0.0.0.0/0"
+#     direction   = "outbound"
+#     icmp {
+#       code = 1
+#       type = 1
+#     }
+#   }
+#   rules {
+#     name        = "inbound"
+#     action      = "allow"
+#     source      = "0.0.0.0/0"
+#     destination = "0.0.0.0/0"
+#     direction   = "inbound"
+#     icmp {
+#       code = 1
+#       type = 1
+#     }
+#   }
+# }
+
 resource "ibm_is_subnet_reserved_ip" "rip-subnet-mac-1" {
   subnet = ibm_is_subnet.subnet-mac-1.id
   name   = "rip-subnet-mac-1"
@@ -78,12 +139,12 @@ resource "ibm_is_floating_ip" "fip-vsi-mac" {
   resource_group = data.ibm_resource_group.group-mac.id
 }
 
-resource "ibm_database" "db-postgresql-mac" {
-  name              = "db-postgresql-mac"
+resource "ibm_database" "db-mac" {
+  name              = "db-mac"
   plan              = "standard"
   location          = "jp-tok"
-  service           = "databases-for-postgresql"
-  service_endpoints = "public-and-private"
+  service           = "databases-for-redis"
+  service_endpoints = "private"
   resource_group_id = data.ibm_resource_group.group-mac.id
   adminpassword     = "password12345678"
 
@@ -110,26 +171,18 @@ resource "ibm_database" "db-postgresql-mac" {
   }
 }
 
-resource "ibm_is_virtual_endpoint_gateway" "vpe-db-postgresql-mac" {
-  name = "vpe-db-postgresql-mac"
+resource "ibm_is_virtual_endpoint_gateway" "vpe-db-mac" {
+  name = "vpe-db-mac"
   vpc             = ibm_is_vpc.vpc-mac.id
   resource_group  = data.ibm_resource_group.group-mac.id
   security_groups = [ibm_is_security_group.sg-vsi-mac.id]
   target {
-    crn           = ibm_database.db-postgresql-mac.id
+    crn           = ibm_database.db-mac.id
     resource_type = "provider_cloud_service"
   }
 }
 
-resource "ibm_is_virtual_endpoint_gateway_ip" "rip_vpe-db-postgresql-mac" {
-  gateway     = ibm_is_virtual_endpoint_gateway.vpe-db-postgresql-mac.id
+resource "ibm_is_virtual_endpoint_gateway_ip" "rip_vpe-db-mac" {
+  gateway     = ibm_is_virtual_endpoint_gateway.vpe-db-mac.id
   reserved_ip = ibm_is_subnet_reserved_ip.rip-subnet-mac-1.reserved_ip
 }
-
-# resource "ibm_resource_instance" "event-stream-mac" {
-#   name              = "event-stream-mac"
-#   service           = "messagehub"
-#   plan              = "standard" # "lite", "enterprise-3nodes-2tb"
-#   location          = "jp-tok"
-#   resource_group_id = data.ibm_resource_group.group-mac.id
-# }
